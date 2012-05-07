@@ -116,3 +116,112 @@ gelijktijdig_check_one(B, C):-
     write(','),
     write(C),
     write(')').
+
+
+% makes the timeline
+print_timelines:-
+    %find all elements that are first
+    %in line
+    findall(X, na(_, X), L),
+    findall(X, na(X, _), L2),
+    % a contains all timelines
+    exclude(L, L2, A),
+    all_timelines(A, TimeLines, []),
+    TimeLines.
+
+
+all_timelines([H|StartingPoints], [[Lists]|Lines], [Lists|History]):-
+    findall(X, na(X, H), Lists),
+    all_timelines(StartingPoints,Lines , History).
+
+% Return all timelines if Head is done
+all_timelines([], [H|_], History):-
+    findall(X, na(X,H), L),
+    unique_points(L, History, []).
+
+all_timelines([], X, History):-
+    all_timelines(X,X, History).
+
+
+
+
+% returns all elements from the first list
+% that are not in the second list
+exclude([], _, []).
+
+exclude([H|L], L2, [H|T]):-
+    \+member(H, L2),!,
+    exclude(L, L2, T).
+
+exclude([H|L], L2, T):-
+    member(H, L2),!,
+    exclude(L, L2, T).
+
+% filters all doubles out of the predicate
+unique_points(X, Z):-
+    unique_points(X, [], Z).
+
+unique_points([], Y, Y).
+
+unique_points([H|T], X, Z):-
+   \+ member(H, X),
+   unique_points(T, [H|X], Z).
+
+unique_points([H|T], X, Z):-
+   member(H, X),
+   unique_points(T, X, Z).
+
+
+% print lists
+print_list([]).
+
+print_list([H|T]):-
+    write(H),
+    print_list(T).
+
+
+solve(Start, Solution):-
+    breadthfirst([[Start]], Solution).
+
+breadthfirst([[Node|Path]|_], [Node|Path]):-
+    goal(Node).
+
+breadthfirst([Path|Paths], Solution):-
+    extend(Path, NewPaths),
+    conc(Paths, NewPaths, Paths1),
+    breadthfirst(Paths1, Solution).
+
+extend([Node|Path], NewPaths):-
+    bagof([NewNode, Node|Path], 
+        (s(Node, NewNode), \+ member(NewNode, [Node|Path])), 
+            NewPaths),!.
+
+extend(Path,[]).
+
+
+goal(H):-
+    lastelement(H, Last),
+    findall(X, na(X,Last), []).
+
+s([Node], NewNode):-
+    lastelement([Node], Last),
+    findall(X, na(X, Last), [P|_]),
+    push_bot(P,[Node],  NewNode).
+
+
+%get last element
+
+lastelement([X], X).
+lastelement([H|T], U):-
+    lastelement(T, U),!.
+
+push_bot(X, [], [X]).				%als Y leeg is dan is L [X]
+
+push_bot(X, [H|T], L):-
+	push_bot(X, T, L2), 			%herhaal tot de tail leeg i
+	push_top(H, L2, L),!.			%voeg H (head) bij L2 en dat geeft antwoord 
+
+
+push_top(X, [], [X]).				%als de Y leeg is dan is L gelijk aan [X]		
+
+push_top(X, Y, [X|Y]).
