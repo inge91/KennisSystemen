@@ -21,7 +21,7 @@ parse([A, voor, B]):-
     impliciet_check(na).
 
 parse([A, na, B]):-
-    check(A, B, na),
+    %check(A, B, na),
     assert(na(A,B)),
     write('asserted na('),
     write(A),
@@ -31,8 +31,9 @@ parse([A, na, B]):-
     impliciet_check(na).
 
 parse([A, gelijktijdig, B]):-
-    check(A, B, gelijktijdig),
+    %check(A, B, gelijktijdig),
     assert(gelijktijdig(A, B)),
+    assert(gelijktijdig(B, A)),
     write('asserted gelijktijdig('),
     write(A),
     write(','),
@@ -46,6 +47,9 @@ impliciet_check(na):-
     findall(X/Y, na(X,Y), List),
     check_all_na(List).
 
+impliciet_check(gelijktijdig):-
+    findall(X/Y, gelijktijdig(X,Y), List),
+    check_all_gelijktijdig(List).
 
 % for all argument pairs of na rules
 % check if ther are implicit rules
@@ -59,6 +63,7 @@ check_all_na([X/Y|List]):-
 na_check_one(A, B):-
     na(B, Z),!,
     \+na(A,Z),
+    A\=Z,
     assert(na(A,Z)),
     write('asserted na('),
     write(A),
@@ -69,6 +74,7 @@ na_check_one(A, B):-
 na_check_one(B, C):-
     na(Z, B),!,
     \+na(Z,C),
+    Z\=C,
     assert(na(Z,C)),
     write('asserted na('),
     write(Z),
@@ -85,3 +91,28 @@ check(X, Y, gelijktijdig):-
     \+na(X,Y),
     \+na(Y,X).
 
+check_all_gelijktijdig([X/Y|T]):-
+    gelijktijdig_check_one(X, Y),
+    check_all_gelijktijdig(T).
+
+gelijktijdig_check_one(A,B):-
+    gelijktijdig(B, Z),
+    \+gelijktijdig(A,Z),
+    A \= Z,
+    assert(gelijktijdig(A,Z)),
+    write('asserted gelijktijdig('),
+    write(A),
+    write(','),
+    write(Z),
+    writeln(')').
+
+gelijktijdig_check_one(B, C):-
+    gelijktijdig(Z, B),
+    \+gelijktijdig(Z,C),
+    C \= Z,
+    assert(gelijktijdig(Z,C)),
+    write('asserted gelijktijdig('),
+    write(Z),
+    write(','),
+    write(C),
+    write(')').
