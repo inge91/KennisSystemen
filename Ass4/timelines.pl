@@ -11,25 +11,38 @@ punt:-
 
 % parse the input to make it assertable
 parse([A, voor, B]):-
+    check(B, A, na),
     assert(na(B,A)),
     write('asserted na('),
     write(B),
     write(','),
     write(A),
     writeln(')'),
-    na_check.
+    impliciet_check(na).
 
 parse([A, na, B]):-
+    check(A, B, na),
     assert(na(A,B)),
     write('asserted na('),
     write(A),
     write(','),
     write(B),
     writeln(')'),
-    na_check.
+    impliciet_check(na).
+
+parse([A, gelijktijdig, B]):-
+    check(A, B, gelijktijdig),
+    assert(gelijktijdig(A, B)),
+    write('asserted gelijktijdig('),
+    write(A),
+    write(','),
+    write(B),
+    writeln(')'),
+    impliciet_check(gelijktijdig).
+    
 
 % findall the arguments of na_rules()
-na_check:-
+impliciet_check(na):-
     findall(X/Y, na(X,Y), List),
     check_all_na(List).
 
@@ -45,6 +58,7 @@ check_all_na([X/Y|List]):-
 % the implicit rule detector
 na_check_one(A, B):-
     na(B, Z),!,
+    \+na(A,Z),
     assert(na(A,Z)),
     write('asserted na('),
     write(A),
@@ -54,6 +68,7 @@ na_check_one(A, B):-
 
 na_check_one(B, C):-
     na(Z, B),!,
+    \+na(Z,C),
     assert(na(Z,C)),
     write('asserted na('),
     write(Z),
@@ -62,4 +77,11 @@ na_check_one(B, C):-
     write(')').
 
 
-    
+%check for inconsistencies
+check(X,Y, na):-
+    \+na(Y,X).
+
+check(X, Y, gelijktijdig):-
+    \+na(X,Y),
+    \+na(Y,X).
+
