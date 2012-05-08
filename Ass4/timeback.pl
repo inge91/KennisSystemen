@@ -94,6 +94,7 @@ na_check_one(_,_).
 na_check_one_timeline(B, C):-
     na(B, A),
     C \= A,
+    \+possible_na(A,C),
     assert(possible_na(A, C)),
     assert(possible_na(C, A)),
     assert(possible_gelijktijdig(C, A)),
@@ -149,44 +150,73 @@ gelijktijdig_check_one(_,_).
 gelijktijd_check_one_timeline(B, C):-
     na(K, B),
     K \= C,
+    \+na(K,C),
     assert(na(K, C)).
 
 gelijktijd_check_one_timeline(B, C):-
     na(B, K),
     K \= C,
+    \+na(C,K),
     assert(na(C, K)).
 
 gelijktijd_check_one_timeline(B, C):-
     na(K, C),
     K \= B,
+    \+na(K,B),
     assert(na(K, B)).
 
 gelijktijd_check_one_timeline(B, C):-
     na(C, K),
     K \= B,
+    \+na(B,K),
     assert(na(B, K)).
 
-gelijktijdig_check_one_timelin(_,_).
+
+gelijktijd_check_one_timeline(B, C):-
+    possible_na(K, B),
+    K \= C,
+    \+possible_na(K,C),
+    assert(possbile_na(K, C)).
+
+gelijktijd_check_one_timeline(B, C):-
+    possible_na(B, K),
+    K \= C,
+    \+possible_na(C,K),
+    assert(possible_na(C, K)).
+
+gelijktijd_check_one_timeline(B, C):-
+    possible_na(K, C),
+    K \= B,
+    \+possible_na(K,B),
+    assert(possible_na(K, B)).
+
+gelijktijd_check_one_timeline(B, C):-
+    possible_na(C, K),
+    K \= B,
+    \+possible_na(B,K),
+    assert(possible_na(B, K)).
+
+gelijktijd_check_one_timeline(_,_).
 
 % makes the timeline
 print_timelines:-
     %find all elements that are first
-    findall(X/Y, na(X,Y), List),
-    member(P/L, List),
+    findall(X, na(_,X), List),
+    unique_points(List, List2),
+    member(L, List2),
     all_sametime(L,Q),
     % OneTimeLine is a list of visited
     % points
     % Look for
     solve_this([Q], [H|Timeline]),
-    solve_this2([H], Timeline2),
-    append(Timeline2, Timeline, TimeLinee),
-    print_timeline(TimeLinee).
+    solve_this2([H|Timeline], Timeline2),            %solve_this2([H], Timeline2),
+    print_timeline(Timeline2).
 
 solve_this2(X,X):-
     the_goal2(X).
     
 solve_this2([H|X], Z):-
-    member(Element, H),
+    member(Element, H),!,
     move2([Element|X], Y),
     solve_this2([Y|[H|X]], Z).
 
@@ -196,31 +226,35 @@ solve_this2([H|X], Z):-
 
 move2([A|T], Y):-
     member(X, A),
-    findall(Z, na(X, Z), []),
-    findall(Z, possible_na(X, Z), PossibleList),
+    findall(Z, possible_na(X, Z), []),
+    findall(Z, na(X, Z), PossibleList),
     member(NewNa, PossibleList),
-    not_members([NewNa], [X|T]),
+    flatten([A|T], History),
+    not_members([NewNa], History),
     all_sametime(NewNa, Y).
 
 % we have a certain na so we use that
 move2([A|T], P):-
     member(X, A),
-    findall(Z, na(X,Z), L),
+    findall(Z, possible_na(X,Z), L),
     member(P, L),
-    not_members(P, [X|T]).
+    flatten([A|T], History),
+    not_members([P], History).
 
 move2([X|T], Y):-
-    findall(Z, na(X, Z), []),
-    findall(Z, possible_na(X, Z), PossibleList),
+    findall(Z, possible_na(X, Z), []),
+    findall(Z, na(X, Z), PossibleList),
     member(NewNa, PossibleList),
-    not_members([NewNa], [X|T]),
+    flatten([X|T], History),
+    not_members([NewNa], History),
     all_sametime(NewNa, Y).
 
 % we have a certain na so we use that
 move2([X|T], P):-
-    findall(Z, na(X,Z), L),
+    findall(Z, possible_na(X,Z), L),
     member(P, L),
-    not_members(P, [X|T]).
+    flatten([X|T], History),
+    not_members([P], History).
 
 
 the_goal2([H|_]):-
@@ -236,37 +270,48 @@ the_goal2([H|_]):-
     \+possible_na(H, _),!.
 
 the_goal2([H|P]):-
+    member(Element, H),
+    %pick the last element
+    findall(X , na(Element,X), L1),
+    findall(X, possible_na(Element, X), L2),
+    append(L1, L2, List),!,
+    flatten([H|P], History),
+    \+not_members(List, History ).
+
+the_goal2([H|P]):-
+    atom(H),
     %pick the last element
     findall(X , na(H,X), L1),
     findall(X, possible_na(H, X), L2),
     append(L1, L2, List),!,
-    \+not_members(List, [H|P] ).
+    flatten([H|P], History),
+    \+not_members(List, History).
 
 not_members([], _).
 
 not_members([H|List], History):-
-    \+member(H, History),
+    atom(H),
+    \+member(H, History),!,
+    not_members(List, History).
+
+not_members([H|List], History):-
+    not_members(H, History),!,
     not_members(List, History).
 
 solve_this(X, X):-
     the_goal(X).
 
 solve_this(X, Z):-
-    move(X, Y),
+    move(X, Y),!,
     append(X, [Y], NewX),
     solve_this(NewX, Z).
 
-
-solve_this(X, Z):-
-    move(X, Y),
-    append(X, [Y], NewX),
-    solve_this(NewX, Z).
 
 %if there is no possible element after last element
 the_goal(X):-
     %pick the last element
     lastelement(X, Last),
-    member(Element, Last),
+    member(Element, Last),!,
     \+na(_, Element),
     \+possible_na(_, Element).
 
@@ -282,59 +327,77 @@ the_goal(X):-
 move(X, Y):-
     lastelement(X, Last),
     member(A, Last),
-    findall(Z, na(Z, A), [] ),
-    findall(Z, possible_na(Z, A), PossibleList),
+    findall(Z, possible_na(Z, A), [] ),
+    findall(Z, na(Z, A), PossibleList),
     member(NewNa, PossibleList),
-    not_members([NewNa], X),
+    flatten(X, History),
+    not_members([NewNa], History),
     all_sametime(NewNa, Y).
 
 % we have a certain na so we use that
 move(X, P):-
     lastelement(X, Last),
     member(A, Last),
-    findall(Z, na(Z,A), L),
+    findall(Z, possible_na(Z,A), L),
     member(NewNa, L),
-    not_members([NewNa], X),
+    flatten(X, History),
+    not_members([NewNa], History),
     all_sametime(NewNa, P).
 
 move(X, Y):-
     lastelement(X, Last),
-    findall(Z, na(Z, Last), [] ),
-    findall(Z, possible_na(Z, Last), PossibleList),
+    member(A, Last),
+    findall(Z, na(Z, A), PossibleList),
     member(NewNa, PossibleList),
-    not_members([NewNa], X),
+    flatten(X, History),
+    not_members([NewNa], History),
+    all_sametime(NewNa, Y).
+
+move(X, Y):-
+    lastelement(X, Last),
+    findall(Z, possible_na(Z, Last), []),
+    findall(Z, na(Z, Last), PossibleList ),
+    member(NewNa, PossibleList),
+    flatten(X, History),
+    not_members([NewNa], History),
     all_sametime(NewNa, Y).
 
 % we have a certain na so we use that
 move(X, P):-
     lastelement(X, Last),
-    findall(Z, na(Z,Last), L),
+    findall(Z, possible_na(Z,Last), L),
     member(NewNa, L),
-    not_members([NewNa], X),
+    flatten(X, History),
+    not_members([NewNa], History),
     all_sametime(NewNa, P).
+
+move(X, Y):-
+    lastelement(X, Last),
+    findall(Z, na(Z, Last), PossibleList ),
+    member(NewNa, PossibleList),
+    flatten(X, History),
+    not_members([NewNa], History),
+    all_sametime(NewNa, Y).
+
 
 all_sametime(Element, SameTimes):-
     findall(X, gelijktijdig(X, Element), L1),
     findall(P, gelijktijdig(Element, P), L2),
     conc(L1, L2, Same),
     conc(Same, [Element], SameTime),
-    unique_points(SameTime, SameTimes)
-    .
+    unique_points(SameTime, SameTimes).
         
 
+%
+%flatten(List, Flattened):-
+%  flatten(List, [], Flattened).
 
-
-
-
-
-
-
-
-
-
-
-
-
+%flatten([], Flattened, Flattened).
+%flatten([Item|Tail], L, Flattened):-
+%  flatten(Item, L1, Flattened),!,
+%  flatten(Tail, L, L1),!.
+%flatten(Item, Flattened, [Item|Flattened]):-
+%  \+ is_list(Item),!.
 
 
 
@@ -468,7 +531,6 @@ conc([Head|Tail_First],List,[Head|Tail_Result]) :-
 
 
 
-na(c, a).
 
 %Je start dus bij het 'start symbool'
 % dan zoek je alle elementen die na het start symbool komen en nooit het eerste argument zijn
