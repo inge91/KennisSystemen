@@ -1,4 +1,6 @@
 :-dynamic na/2.
+:-dynamic possible_gelijktijdig/2.
+:-dynamic possible_na/2.
 
 % a voor b en b voor c dan weet je niet of a voor b is of b voor c is 
 
@@ -57,6 +59,7 @@ check_all_na([]).
 
 check_all_na([X/Y|List]):-
     na_check_one(X,Y),
+    na_check_one_timeline(X, Y),
     check_all_na(List).
 
 % the implicit rule detector
@@ -82,6 +85,28 @@ na_check_one(B, C):-
     write(C),
     write(')').
 
+na_check_one(_,_).
+
+% Checks if there are more possible timelines
+% for instance if we have na(b,a) and na(b, c)
+% then derivee (b,a
+na_check_one_timeline(B, C):-
+    na(B, A),
+    C \= A,
+    assert(possible_na(A, C)),
+    assert(possible_na(C, A)),
+    assert(possible_gelijktijdig(C, A)),
+    write(A),
+    write(','),
+    write(C),
+    write(')'),
+    write('asserted na('),
+    write(C),
+    write(','),
+    write(A),
+    write(')').
+
+na_check_one_timeline(_,_).
 
 %check for inconsistencies
 check(X,Y, na):-
@@ -121,27 +146,101 @@ gelijktijdig_check_one(B, C):-
 % makes the timeline
 print_timelines:-
     %find all elements that are first
-    %in line
-    findall(X, na(_, X), L),
-    findall(X, na(X, _), L2),
-    % a contains all timelines
-    exclude(L, L2, A),
-    all_timelines(A, TimeLines, []),
-    TimeLines.
+    findall(X/Y, na(X,Y), List),
+    member(P/Q, List),
+    % OneTimeLine is a list of visited
+    % points
+    % Look for
+    solve_this([Q], Timeline),
+    print_timeline(Timeline).
 
 
-all_timelines([H|StartingPoints], [[Lists]|Lines], [Lists|History]):-
-    findall(X, na(X, H), Lists),
-    all_timelines(StartingPoints,Lines , History).
+solve_this(X, X):-
+    the_goal(X).
 
-% Return all timelines if Head is done
-all_timelines([], [H|_], History):-
-    findall(X, na(X,H), L),
-    unique_points(L, History, []).
+solve_this(X, Z):-
+    lastelement(X, Last),
+    member(A, Last),
+    move(A, Y),
+    append(X, [Y], NewX),
+    solve_this(NewX, Z).
 
-all_timelines([], X, History):-
-    all_timelines(X,X, History).
 
+solve_this(X, Z):-
+    lastelement(X, Last),
+    move(Last, Y),
+    append(X, [Y], NewX),
+    solve_this(NewX, Z).
+
+%if there is no possible element after last element
+the_goal(X):-
+    %pick the last element
+    lastelement(X, Last),
+    member(Element, Last),
+    \+na(_, Element),
+    \+possible_na(_, Element).
+
+
+the_goal(X):-
+    %pick the last element
+    lastelement(X, Last),
+    \+na(_, Last),
+    \+possible_na(_, Last).
+
+% we only know possible moves so we only use those
+move(X, Y):-
+    findall(Z, na(Z, X), [] ),
+    findall(Z, possible_na(Z, X), PossibleList),
+    member(NewNa, PossibleList),
+    all_sametime(NewNa, Y).
+
+% we have a certain na so we use that
+move(X, P):-
+    findall(Z, na(Z,X), L),
+    member(P, L).
+
+
+all_sametime(Element, SameTime):-
+    findall(X, gelijktijdig(X, Element), L1),
+    findall(P, gelijktijdig(Element, P), L2),
+    conc(L1, L2, SameTime).
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+% print timelines
+print_timeline([]).
+
+print_timeline([H]):-
+    write(H).
+    print_timeline([]).
+
+print_timeline([H|TimeLine]):-
+    write(H),
+    write(------),
+    print_timeline(TimeLine).
 
 
 
@@ -179,7 +278,7 @@ print_list([H|T]):-
     write(H),
     print_list(T).
 
-
+% Standard Breadthfirst algorithm , by Bratko
 solve(Start, Solution):-
     breadthfirst([[Start]], Solution).
 
