@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%  Ass 4                   %%                                   
+%%  Ass 4                   %%
 %%                          %%
-%%  Richard Pronk           %%    
+%%  Richard Pronk           %%
 %%                          %%
 %%  Inge Becht              %%
 %%                          %%
@@ -10,6 +10,7 @@
 
 :-dynamic na/2.
 :-dynamic gelijktijdig/2.
+:-dynamic possible_gelijktijdig/2.
 
 % Our Program works as follows:
 %
@@ -37,7 +38,7 @@
 % that carries with it. We do this everytime so we don't miss any possible underlying
 % rules, and it seems to work.
 % Some of these possible underlying rules are:
-% - if b after a and c after b then c after a 
+% - if b after a and c after b then c after a
 % - if a sametime c and d after c then d after a
 % etc.
 %
@@ -176,7 +177,7 @@ add_pair(A, na, B):-
     A \= B,
     assert(na(A, B)),
     print_assert(A, na, B).
-    
+
 add_pair(A, na, B):-
     na(A, B);
     A == B;
@@ -187,7 +188,7 @@ add_pair(A, gelijktijdig, B):-
     A \= B,
     assert(gelijktijdig(A, B)),
     print_assert(A, gelijktijdig, B).
-    
+
 add_pair(A, gelijktijdig, B):-
     gelijktijdig(A, B);
     A == B.
@@ -247,7 +248,7 @@ make_explicit3(A, na, B):-
     findall(X, na(X, A), [])),
 
     % all elements before B and not yet in
-    % a relation with A are getting a symmetric 
+    % a relation with A are getting a symmetric
     % relation with A
     ((findall(X, na(X, B), NA_elements2),
         remove_start(NA_elements2, NA),
@@ -298,7 +299,7 @@ make_explicit3(B, gelijktijdig, A):-
     (findall(X, na(B, X), NA_elements2),
 	remove_start(NA_elements2, NA_el2),
         add_pairs5(B, na, NA_el2)).
-			make_explicit3(A, na, B):-
+make_explicit3(A, na, B):-
     % all elements after B ar alements after A
    ((findall(X, na(B, X), NA_elements),
         findall(X, gelijktijdig(B, X), Gelijk),
@@ -314,7 +315,7 @@ make_explicit3(B, gelijktijdig, A):-
     findall(X, na(X, A), [])),
 
     % all elements before B and not yet in
-    % a relation with A are getting a symmetric 
+    % a relation with A are getting a symmetric
     % relation with A
     ((findall(X, na(X, B), NA_elements2),
         remove_start(NA_elements2, NA),
@@ -340,12 +341,12 @@ make_explicit3(B, gelijktijdig, A):-
         % ((findall(X, na(A, X), NA_elements4),
         % add_pairs(B, na, NA_elements4),
         % add_pairs2(NA_elements4, na,B));
-        % (findall(X, na(A, X),[]))).		
+        % (findall(X, na(A, X),[]))).
 
-		
+
 % After a lot of trial and error....
 % make_explicit4 uses a na relation to
-% define everything that comes before and 
+% define everything that comes before and
 % after both elements (Except in cases of ambiguity
 make_explicit4(A, na, B):-
 	% all elements after B ar alements after A
@@ -361,8 +362,8 @@ make_explicit4(A, na, B):-
         append(NA_elements3, Gelijk2, All2),
     add_pairs2(All2, na, B));
     findall(X, na(X, A), [])).
-       
-		
+
+
 make_explicit4(B, gelijktijdig, A):-
     (findall(X, gelijktijdig(B, X), Gelijktijdige_elements),
         add_pairs5(A, gelijktijdig,Gelijktijdige_elements),
@@ -384,9 +385,9 @@ make_explicit4(B, gelijktijdig, A):-
 	remove_start(NA_elements2, NA_el2),
         add_pairs5(B, na, NA_el2)).
 
-		
-	
-		
+
+
+
 
 % makes explicit all things that have to do with gelijktijdig relations
 make_explicit(B, gelijktijdig, A):-
@@ -410,8 +411,8 @@ make_explicit(B, gelijktijdig, A):-
 	remove_start(NA_elements2, NA_el2),
         add_pairs5(B, na, NA_el2)).
 
-% we check if one element 
-% and a list have no prior 
+% we check if one element
+% and a list have no prior
 % relatiosn, if it has, the element is deleted out of the list
 no_relations(_, [], []).
 
@@ -469,7 +470,7 @@ add_pairs3(X, gelijktijdig, [H|T]):-
     add_pair2(X, gelijktijdig, H),
     add_pairs3(X, gelijktijdig, T).
 
-% add_pairs4 doesnt check for history either but also uses a list in 
+% add_pairs4 doesnt check for history either but also uses a list in
 % the first argument
 add_pairs4([], na, _).
 add_pairs4([], gelijktijdig, _).
@@ -502,8 +503,8 @@ add_pair2(H, gelijktijdig, X):-
     gelijktijdig(H, X);
     H == X.
 
-% these are all help predicates and not very interesting to describe	
-	
+% these are all help predicates and not very interesting to describe
+
 add_pair3(H, na, X):-
     H \= X,
     assert(na(H, X)),
@@ -519,7 +520,7 @@ add_pair3(H, gelijktijdig, X):-
 
 add_pair3(H, gelijktijdig, X):-
     H == X.
-	
+
 % add_pairs3 doesnt check in history when adding relations
 add_pairs5(_, na, []).
 
@@ -533,7 +534,7 @@ add_pairs5(X, gelijktijdig, [H|T]):-
     add_pair3(X, gelijktijdig, H),
     add_pairs5(X, gelijktijdig, T).
 
-% add_pairs4 doesnt check for history either but also uses a list in 
+% add_pairs4 doesnt check for history either but also uses a list in
 % the first argument
 add_pairs6([], na, _).
 add_pairs6([], gelijktijdig, _).
@@ -546,7 +547,7 @@ add_pairs6([H|T], gelijktijdig, X):-
     add_pair3(H, gelijktijdig, X),
     add_pairs6(T, gelijktijdig, X).
 
-	
+
 remove_start([], []):-!.
 
 remove_start([start|T], P):-
@@ -554,3 +555,96 @@ remove_start([start|T], P):-
 
 remove_start([X|T], [X|P]):-
     remove_start(T, P),!.
+
+
+solve:-
+    findall(X,na(start,X),List),
+    unique_points(List,List2),
+    timelines(List2,[]).
+
+timelines([],[_|T]):-
+     %tel elemeten
+     findall(X,na(start,X),List),
+     unique_points(List,List2),
+     flatten(T,T_flatten),
+     length(List2,L),
+     length(T_flatten,L),
+     print_timeline(T),nl.
+
+timelines(X,[]):-
+    timelines(X,[start]).
+
+timelines(PossiblePoints, Solution):-
+    findall(A, (member(A,PossiblePoints), findall(Test,((na(Test,A)), flatten(Solution,Test2), \+member(Test,Test2)), [])),Uitkomst),
+    member(A, Uitkomst),
+    findall(X, gelijktijdig(X,A), GelijktijdigLijst),
+    findall(X, possible_gelijktijdig(X,A), GelijktijdigLijst2),
+    append([A],GelijktijdigLijst,A2),
+    (append(A2,GelijktijdigLijst2,A3);append(A2,[],A3)),
+    append(Solution,[A3],Solution2),
+    exclude(PossiblePoints, A3, PossiblePoints2),
+    timelines(PossiblePoints2,Solution2).
+
+
+
+% filters all doubles out of the predicate
+unique_points(X, Z):-
+    unique_points(X, [], Z).
+
+unique_points([], Y, Y).
+
+unique_points([H|T], X, Z):-
+   \+ member(H, X),
+   unique_points(T, [H|X], Z).
+
+unique_points([H|T], X, Z):-
+   member(H, X),
+   unique_points(T, X, Z).
+
+
+% print timelines
+print_timeline([]).
+
+print_timeline([H]):-
+    atom(H),
+    write(H),!,
+    print_timeline([]).
+
+print_timeline([H|TimeLine]):-
+    atom(H),
+    write(H),
+    write(------),!,
+    print_timeline(TimeLine).
+
+print_timeline([H]):-
+    print_all_elements(H),!,
+    print_timeline([]).
+
+print_timeline([H|TimeLine]):-
+    print_all_elements(H),
+    write(------),!,
+    print_timeline(TimeLine).
+
+print_all_elements([]).
+
+print_all_elements([H]):-
+    write(H),
+    print_all_elements([]).
+
+print_all_elements([H|T]):-
+    write(H),
+    write('='),
+    print_all_elements(T).
+
+
+% returns all elements from the first list
+% that are not in the second list
+exclude([], _, []).
+
+exclude([H|L], L2, [H|T]):-
+    \+member(H, L2),!,
+    exclude(L, L2, T).
+
+exclude([H|L], L2, T):-
+    member(H, L2),!,
+    exclude(L, L2, T).
