@@ -616,9 +616,6 @@ na(a,c).
 na(start,c).
 na(b,c).
 na(a,c).
-na(start,d).
-na(b,d).
-na(a,d).
 possible_gelijktijdig(b,c).
 possible_gelijktijdig(c,b).
 
@@ -651,6 +648,8 @@ timelines(PossiblePoints, Solution):-
     append(Solution,[A3],Solution2),
     exclude(PossiblePoints, A3, PossiblePoints2),
     timelines(PossiblePoints2,Solution2).
+
+%Fact    possible
 
 
 

@@ -3,7 +3,7 @@
 :-dynamic possible_gelijktijdig/2.
 :-dynamic possible_na/2.
 
-% a voor b en b voor c dan weet je niet of a voor b is of b voor c is
+% a voor b en b voor c dan weet je niet of a voor b is of b voor c is 
 
 % punt predicate parses incoming sentence
 % and derives other facts
@@ -31,7 +31,7 @@ parse([A, na, B]):-
     write(','),
     write(B),
     writeln(')'),
-    impliciet_check(na).
+    impliciet_check(na),!.
 
 parse([A, gelijktijdig, B]):-
     %check(A, B, gelijktijdig),
@@ -42,8 +42,8 @@ parse([A, gelijktijdig, B]):-
     write(','),
     write(B),
     writeln(')'),
-    impliciet_check(gelijktijdig).
-
+    impliciet_check(gelijktijdig),!.
+    
 
 % findall the arguments of na_rules()
 impliciet_check(na):-
@@ -61,13 +61,14 @@ check_all_na([]).
 check_all_na([X/Y|List]):-
     na_check_one(X,Y),
     na_check_one_timeline(X, Y),
+    na_check_one_gelijktijdig(X,Y),
     check_all_na(List).
 
 % the implicit rule detector
 na_check_one(A, B):-
-    na(B, Z),!,
+    na(B, Z),
     \+na(A,Z),
-    A\=Z,
+    A\=Z,!,
     assert(na(A,Z)),
     write('asserted na('),
     write(A),
@@ -76,9 +77,9 @@ na_check_one(A, B):-
     writeln(')').
 
 na_check_one(B, C):-
-    na(Z, B),!,
+    na(Z, B),
     \+na(Z,C),
-    Z\=C,
+    Z\=C,!,
     assert(na(Z,C)),
     write('asserted na('),
     write(Z),
@@ -86,7 +87,7 @@ na_check_one(B, C):-
     write(C),
     write(')').
 
-na_check_one(_,_).
+na_check_one(_,_):-!.
 
 % Checks if there are more possible timelines
 % for instance if we have na(b,a) and na(b, c)
@@ -94,7 +95,9 @@ na_check_one(_,_).
 na_check_one_timeline(B, C):-
     na(B, A),
     C \= A,
-    \+possible_na(A,C),
+    \+na(A,C),
+    \+na(C,A),
+    \+gelijktijdig(A, C),!,
     assert(possible_na(A, C)),
     assert(possible_na(C, A)),
     assert(possible_gelijktijdig(C, A)),
@@ -108,14 +111,83 @@ na_check_one_timeline(B, C):-
     write(A),
     write(')').
 
-na_check_one_timeline(_,_).
+na_check_one_timeline(B, C):-
+    na(A, B),
+    C \= A,
+    \+na(A,C),
+    \+na(C,A),
+    \+gelijktijdig(A, C),!,
+    assert(possible_na(A, C)),
+    assert(possible_na(C, A)),
+    assert(possible_gelijktijdig(C, A)),
+    write(A),
+    write(','),
+    write(C),
+    write(')'),
+    write('asserted na('),
+    write(C),
+    write(','),
+    write(A),
+    write(')').
+
+
+na_check_one_timeline(C, B):-
+    na(A, B),
+    C \= A,
+    \+na(A,C),
+    \+na(C,A),
+    \+gelijktijdig(A, C),!,
+    assert(possible_na(A, C)),
+    assert(possible_na(C, A)),
+    assert(possible_gelijktijdig(C, A)),
+    write(A),
+    write(','),
+    write(C),
+    write(')'),
+    write('asserted na('),
+    write(C),
+    write(','),
+    write(A),
+    write(')').
+
+na_check_one_timeline(C, B):-
+    na(B, A),
+    C \= A,
+    \+na(A,C),
+    \+na(C,A),
+    \+gelijktijdig(A, C),!,
+    assert(possible_na(A, C)),
+    assert(possible_na(C, A)),
+    assert(possible_gelijktijdig(C, A)),
+    write(A),
+    write(','),
+    write(C),
+    write(')'),
+    write('asserted na('),
+    write(C),
+    write(','),
+    write(A),
+    write(')').
+
+
+na_check_one_timeline(_,_):-!.
+
+na_check_one_gelijktijdig(B, C):-
+    gelijktijdig(B, A),
+    A \= C,
+    \+na(A, C),!,
+    \+assert(na(A, C)).
+
+na_check_one_gelijktijdig(C, B):-
+    gelijktijdig(A, B),
+    A \= C,
+    \+na(C, A),!,
+    \+assert(na(C, A)).
+
+na_check_one_gelijktijdig(_,_):-!.
 
 %check for inconsistencies
 check(X,Y, na):-
-    \+na(Y,X).
-
-check(X, Y, gelijktijdig):-
-    \+na(X,Y),
     \+na(Y,X).
 
 check_all_gelijktijdig([X/Y|T]):-
@@ -146,6 +218,7 @@ gelijktijdig_check_one(B, C):-
     write(')').
 
 gelijktijdig_check_one(_,_).
+
 
 gelijktijd_check_one_timeline(B, C):-
     na(K, B),
@@ -214,7 +287,7 @@ print_timelines:-
 
 solve_this2(X,X):-
     the_goal2(X).
-
+    
 solve_this2([H|X], Z):-
     member(Element, H),!,
     move2([Element|X], Y),
@@ -287,12 +360,19 @@ the_goal2([H|P]):-
     flatten([H|P], History),
     \+not_members(List, History).
 
-not_members([], _).
+not_members([], _):-false.
 
 not_members([H|List], History):-
     atom(H),
-    \+member(H, History),!,
+    member(H, History),!,
     not_members(List, History).
+
+not_members([H|_], History):-
+    atom(H),
+    \+member(H, History),!,
+    true.
+
+
 
 not_members([H|List], History):-
     not_members(H, History),!,
@@ -308,20 +388,43 @@ solve_this(X, Z):-
 
 
 %if there is no possible element after last element
-the_goal(X):-
-    %pick the last element
-    lastelement(X, Last),
-    member(Element, Last),!,
-    \+na(_, Element),
-    \+possible_na(_, Element).
+%the_goal(X):-
+%    %pick the last element
+%    lastelement(X, Last),
+%    member(Element, Last),!,
+%    \+na(_, Element),
+%    \+possible_na(_, Element).
 
 
-the_goal(X):-
+%the_goal(X):-
+%    %pick the last element
+%    lastelement(X, Last),
+%    atom(Last),
+%    \+na(_, Last),
+%    \+possible_na(_, Last).
+
+
+
+the_goal([H|P]):-
+    lastelement([H|P], Last),
+    member(Element, Last),
     %pick the last element
-    lastelement(X, Last),
-    atom(Last),
-    \+na(_, Last),
-    \+possible_na(_, Last).
+    findall(X , na(X, Element), L1),
+    findall(X, possible_na(X,Element), L2),
+    append(L1, L2, List),!,
+    flatten([H|P], History),
+    \+not_members(List, History ).
+
+the_goal([H|P]):-
+    lastelement([H|P], R),
+    atom(R),
+    %pick the last element
+    findall(X , na(X, R), L1),
+    findall(X, possible_na( X, R), L2),
+    append(L1, L2, List),!,
+    flatten([H|P], History),
+    \+not_members(List, History).
+
 
 % we only know possible moves so we only use those
 move(X, Y):-
@@ -386,7 +489,7 @@ all_sametime(Element, SameTimes):-
     conc(L1, L2, Same),
     conc(Same, [Element], SameTime),
     unique_points(SameTime, SameTimes).
-
+        
 
 %
 %flatten(List, Flattened):-
@@ -487,8 +590,8 @@ breadthfirst([Path|Paths], Solution):-
     breadthfirst(Paths1, Solution).
 
 extend([Node|Path], NewPaths):-
-    bagof([NewNode, Node|Path],
-        (s(Node, NewNode), \+ member(NewNode, [Node|Path])),
+    bagof([NewNode, Node|Path], 
+        (s(Node, NewNode), \+ member(NewNode, [Node|Path])), 
             NewPaths),!.
 
 extend(Path,[]).
@@ -515,11 +618,11 @@ lastelement([H|T], U):-
 push_bot(X, [], [X]).				%als Y leeg is dan is L [X]
 
 push_bot(X, [H|T], L):-
-	push_bot(X, T, L2),			%herhaal tot de tail leeg i
-	push_top(H, L2, L),!.			%voeg H (head) bij L2 en dat geeft antwoord
+	push_bot(X, T, L2), 			%herhaal tot de tail leeg i
+	push_top(H, L2, L),!.			%voeg H (head) bij L2 en dat geeft antwoord 
 
 
-push_top(X, [], [X]).				%als de Y leeg is dan is L gelijk aan [X]
+push_top(X, [], [X]).				%als de Y leeg is dan is L gelijk aan [X]		
 
 push_top(X, Y, [X|Y]).
 
@@ -530,129 +633,27 @@ conc([Head|Tail_First],List,[Head|Tail_Result]) :-
               conc(Tail_First,List,Tail_Result).
 
 
-/*
-possible_gelijktijdig(b,c).
-possible_gelijktijdig(c,b).
-%possible_na(b,c).
-
-%gelijktijdig(b,c).
-%gelijktijdig(c,b).
-na(start,a).
-na(start,b).
-na(start,c).
-na(start,g).
-na(a,b).
-na(a,c).
-na(a,g).
-na(b,g).
-na(c,g).
-%b na of gelijk c
-*/
-/*  test 1  SUCCES!
-gelijktijdig(c,d).
-gelijktijdig(d,c).
-na(start,a).
-na(start,b).
-na(a,b).
-na(start,c).
-na(b,c).
-na(a,c).
-na(start,d).
-na(b,d).
-na(a,d).
-na(b,c).
-na(a,c).
-na(start,g).
-na(b,g).
-na(a,g).
-*/
-/*  test2 SUCCES!
-gelijktijdig(c,d).
-gelijktijdig(d,c).
-na(start,a).
-na(start,b).
-na(a,b).
-na(start,c).
-na(b,c).
-na(a,c).
-na(start,g).
-na(b,g).
-na(a,g).
-na(start,i).
-na(i,b).
-na(i,c).
-na(i,g).
-na(start,l).
-na(b,l).
-na(a,l).
-na(i,l).
-na(start,d).
-na(b,d).
-na(a,d).
-na(b,c).
-na(a,c).
-na(l,d).
-na(i,d).
-*/
-/* fail
-na(start,a).
-na(start,b).
-na(a,b).
-na(start,c).
-na(c,b).
-na(start,d).
-na(b,d).
-na(a,d).
-na(c,d).
-possible_gelijktijdig(b,c).
-possible_gelijktijdig(c,b).
-*/
-na(start,a).
-na(start,b).
-na(a,b).
-na(start,c).
-na(b,c).
-na(a,c).
-na(start,c).
-na(b,c).
-na(a,c).
-na(start,d).
-na(b,d).
-na(a,d).
-possible_gelijktijdig(b,c).
-possible_gelijktijdig(c,b).
 
 
-
-print_timelines2:-
-    findall(X,na(start,X),List),
-    unique_points(List,List2),
-    timelines(List2,[]).
-
-timelines([],[H|T]):-
-     %tel elemeten
-     findall(X,na(start,X),List),
-     unique_points(List,List2),
-     flatten(T,T_flatten),
-     length(List2,L),
-     length(T_flatten,L),
-     print_timeline(T),nl.
-
-timelines(X,[]):-
-    timelines(X,[start]).
-
-timelines(PossiblePoints, Solution):-
-    findall(A, (member(A,PossiblePoints), findall(Test,((na(Test,A)), flatten(Solution,Test2), \+member(Test,Test2)), [])),Uitkomst),
-    member(A, Uitkomst),
-    findall(X, gelijktijdig(X,A), GelijktijdigLijst),
-    findall(X, possible_gelijktijdig(X,A), GelijktijdigLijst2),
-    append([A],GelijktijdigLijst,A2),
-    (append(A2,GelijktijdigLijst2,A3);append(A2,[],A3)),
-    append(Solution,[A3],Solution2),
-    exclude(PossiblePoints, A3, PossiblePoints2),
-    timelines(PossiblePoints2,Solution2).
+%Je start dus bij het 'start symbool'
+% dan zoek je alle elementen die na het start symbool komen en nooit het eerste argument zijn
+% in een na() feit, alleen het tweede argument. 
+% Je haalt er hier een van uit en gebruikt deze om alle possible_na's toe te
+% passen. Voeg deze alleen toe als symbolen hiervan nieuw zijn en niet al
+% voorkomen in je huidige code.
+% als er geen possible na's zijn dan probeer je hetzelfde met de na's
+% als allebei een lege lijst oplevert dan ben je klaar!
+% denk erom member te gebruiken
 
 
+%start -> a
+%
+%    findall(X, possible_na(X, a), [])
+%    findall(X, na(X, a), [] ).
+%    not_members(b, [a])
+%
+%    possible_na(b, a)
 
+%[a, [b,c]]  
 
 

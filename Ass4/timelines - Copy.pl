@@ -1,7 +1,7 @@
 :-dynamic na/2.
 :-dynamic gelijktijdig/2.
 
-% a voor b en b voor c dan weet je niet of a voor b is of b voor c is 
+% a voor b en b voor c dan weet je niet of a voor b is of b voor c is
 
 % punt predicate parses incoming sentence
 % and derives other facts
@@ -12,6 +12,8 @@ punt:-
 
 % parse the input to make it assertable
 parse([A, voor, B]):-
+    assert(na(start,A)),
+    assert(na(start,B)),
     check(B, A, na),
     assert(na(B,A)),
     write('asserted na('),
@@ -22,6 +24,8 @@ parse([A, voor, B]):-
     impliciet_check(na).
 
 parse([A, na, B]):-
+    assert(na(start,A)),
+    assert(na(start,B)),
     %check(A, B, na),
     assert(na(A,B)),
     write('asserted na('),
@@ -32,6 +36,8 @@ parse([A, na, B]):-
     impliciet_check(na).
 
 parse([A, gelijktijdig, B]):-
+    assert(na(start,A)),
+    assert(na(start,B)),
     %check(A, B, gelijktijdig),
     assert(gelijktijdig(A, B)),
     assert(gelijktijdig(B, A)),
@@ -41,34 +47,50 @@ parse([A, gelijktijdig, B]):-
     write(B),
     writeln(')'),
     impliciet_check(gelijktijdig).
-    
+
 %findall na/2 relation and apply them to the gelijktijdig one
 gelijktijdig_check:-
-	findall(X, gelijktijdig(X,_), gelijktijdigList),
-	gelijktijdig_check_one(gelijktijdigList).
+	findall(X, gelijktijdig(X,_), GelijktijdigList),
+	gelijktijdig_check1(GelijktijdigList).
 
-gelijktijdig_check_one([]).	
-	
-gelijktijdig_check_one(H|T):-
+gelijktijdig_check1([]).
+
+gelijktijdig_check1([H|T]):-
+	findall(X, gelijktijdig(H,X), GelijktijdigList),
+	gelijktijdig_check2(H,GelijktijdigList),
+	gelijktijdig_check1(T).
+
+
+gelijktijdig_check2(X,[H|T]):-
 	findall(Z,na(H, Z),List),
-	assertNaList2(H, List),
+	assertNaList2(X, List),
 	findall(Z,na(Z, H),List2),
-	assertNaList1(H, List2),
-	gelijktijdig_check_one(T).
+	assertNaList1(X, List2),
+	gelijktijdig_check2(X,T).
 
 assertNaList1(_,[]).
-	
-assertNaList1(X,H|T):-
+
+assertNaList1(X,[H|T]):-
 	assert(na(X,H)),
-	assertNaList(X,T).
-	
+	write('asserted na('),
+	write(X),
+	write(','),
+	write(H),
+	writeln(')'),
+	assertNaList1(X,T).
+
 assertNaList2(_,[]).
-	
-assertNaList2(X,H|T):-
+
+assertNaList2(X,[H|T]):-
 	assert(na(H,X)),
-	assertNaList(X,T).
-	
-	
+	write('asserted na('),
+	write(H),
+	write(','),
+	write(X),
+	writeln(')'),
+	assertNaList2(X,T).
+
+
 % findall the arguments of na_rules()
 impliciet_check(na):-
     findall(X/Y, na(X,Y), List),
@@ -143,6 +165,27 @@ gelijktijdig_check_one(B, C):-
     write(','),
     write(C),
     write(')').
+
+print_timelines2:-
+    findall(X,na(start,X),List),
+    unique_points(List,List2),
+    timelines(List2,Uitkomst),
+    write(Uitkomst).
+
+timelines([],_).
+
+timelines([H|T], Solution):-
+        findall(A, (member(A,List2), findall(Test,(na(Test,A), Test \= start),TestList), TestList == []) ,Uitkomst),
+	member(A, Uitkomst),
+	append([A],Solution),
+	exclude([A], Uitkomst, Uitkomst2),
+	append(Uitkomst2, T,T2),
+	timelines(T2,Solution).
+
+timelines(_,_).
+	%done
+
+
 
 
 % makes the timeline
@@ -219,8 +262,8 @@ breadthfirst([Path|Paths], Solution):-
     breadthfirst(Paths1, Solution).
 
 extend([Node|Path], NewPaths):-
-    bagof([NewNode, Node|Path], 
-        (s(Node, NewNode), \+ member(NewNode, [Node|Path])), 
+    bagof([NewNode, Node|Path],
+        (s(Node, NewNode), \+ member(NewNode, [Node|Path])),
             NewPaths),!.
 
 extend(Path,[]).
@@ -245,10 +288,10 @@ lastelement([H|T], U):-
 push_bot(X, [], [X]).				%als Y leeg is dan is L [X]
 
 push_bot(X, [H|T], L):-
-	push_bot(X, T, L2), 			%herhaal tot de tail leeg i
-	push_top(H, L2, L),!.			%voeg H (head) bij L2 en dat geeft antwoord 
+	push_bot(X, T, L2),			%herhaal tot de tail leeg i
+	push_top(H, L2, L),!.			%voeg H (head) bij L2 en dat geeft antwoord
 
 
-push_top(X, [], [X]).				%als de Y leeg is dan is L gelijk aan [X]		
+push_top(X, [], [X]).				%als de Y leeg is dan is L gelijk aan [X]
 
 push_top(X, Y, [X|Y]).
