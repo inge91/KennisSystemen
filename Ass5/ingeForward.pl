@@ -60,7 +60,7 @@ predictComponentOutcome(X):-
 
 % returns all elements from the first list
 % that are not in the second list
-exclude([], _, []).
+exclude([], _, []):-!.
 
 exclude([H|L], L2, [H|T]):-
     \+member(H, L2),!,
