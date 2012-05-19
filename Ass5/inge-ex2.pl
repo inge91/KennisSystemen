@@ -20,7 +20,7 @@ input(j,2).
 
 
 output(s,100).
-output(t,100).
+output(t,120).
 backprop([X/Y|T], [Errors|Error]):-
     predictedValue(X, Z),
     writef("Value of output %t seems incorrect.\nEstimated output: %t \nMeasured
@@ -42,7 +42,6 @@ component(a2, add, m, n, q).
 component(a3, add, n, o, r).
 component(m6, mult, p, q, s).
 component(m7, mult, q, r, t).
-
 
 
 diagnose:-
@@ -107,10 +106,10 @@ backprop:-
     printlist(FinalErrors).
 
 printlist([H]):-
-    write(H).
+    write(H),!.
 
 printlist([H|T]):-
-    write(H),
+    write(H),!,
     write(', '),
     printlist(T).
 
@@ -236,24 +235,34 @@ elimenate_errors([H|T], [AllBad|Tail]):-
     component(H,_,A,B,Output),
     predictedValue(Output, Val),
     \+output(Output, _),
-    writef("What do you measure at point %t\n >", [Output]),
+    writef("\n\nWhat do you measure at point %t\n >", [Output]),
     read(NewVal),
     assert(probedValue(Output, NewVal)),
     ((
     probedValue(Output, Val),
-    write('\nProbe has same value as predicted.\nAll components that came before will be added to the good set\n'),
+    write('\nProbe has same value as predicted.\n
+    All components that came before will be added to the good set:\n'),
     predecessors(H, Pred),
+    printlist(Pred),
     flatten(Pred, Preds),
     append([H], Preds, Preds2),
     findall(X, component(X, _, Output, _, _), L),
     findall(X, component(X, _, _, Output, _), L2),
     append(L, L2, L3),
+    write('\nChecking for other dependencies...'),
     check_forward_list(L3, Good2, Bad),
     flatten(Bad, AllBad),
     flatten(Good2, Good3),
     predecessors_list(Good3, Good4),
-    flatten(Good4, Good),
+    flatten(Good4, Good5),
+    predecessors_list(AllBad, BadPred),
+    flatten(BadPred, BadPred2),
+    exclude_second(BadPred, Good5, Good), 
     append(Preds2, Good, Preds3),
+    write('\nThe following components are now in the good set:\n'),
+    printlist(Preds3),
+    write('\nThe following components are now in the definite bad set:\n'),
+    printlist(AllBad),
     remove_good(Preds3, T, NewT),
     % remove everything before,
     % this component as well?,
@@ -265,19 +274,27 @@ elimenate_errors([H|T], [AllBad|Tail]):-
     % both are input nodes
     input(A,_),
     input(B,_),
-    writef("\n%t is malfunctioning\n", [H]),
+    writef("\n%t is malfunctioning and will be added to the bad list\n", [H]),
     % we certainly know now the model is not functioning and is set above
     % we do a check forward to see if more elements are not functioning(Bad)
     findall(X, component(X, _, Output, _, _), L),
     findall(X, component(X, _, _, Output, _), L2),
     append(L, L2, L3),
+    write('\nChecking for other dependencies...'),
     check_forward_list(L3, Good2, Bad),
     flatten(Bad, Bad2),
     flatten(Good2, Good3),
     predecessors_list(Good3, Good4),
-    flatten(Good4, Good),
+    flatten(Good4, Good5),
     append([H], Bad2, AllBad),
+    predecessors_list(AllBad, BadPred),
+    flatten(BadPred, BadPred2),
+    exclude_second(BadPred, Good5, Good), 
     % the Good ones are elimenated from the T set
+    write('\nThe following components are now in the good set:\n'),
+    printlist(Good),
+    write('\nThe following components are now in the definite bad set:\n'),
+    printlist(AllBad),
     remove_good(Good, T,  T2),
     retractall(test(_,_)),
     elimenate_errors(T2, Tail));
@@ -291,15 +308,35 @@ elimenate_errors([H|T], [AllBad|Tail]):-
     check_forward_list(L3, Good2, Bad),
     flatten(Bad, Bad2),
     flatten(Good2, Good3),
+    write('\nChecking for other dependencies...'),
     predecessors_list(Good3, Good4),
-    flatten(Good4, Good),
-    AllBad = Bad,
+    flatten(Good4, Good5),
+    AllBad = Bad2,
+    predecessors_list(AllBad, BadPred),
+    predecessors_list([H], Un),
+    flatten(Un, Unknown),
+    flatten(BadPred, BadPred2),
+    exclude_second(Unknown, Good5, Good6),
+    exclude_second(BadPred, Good6, Good), 
+    write('\nThe following components are now in the good set:\n'),
+    printlist(Good),
+    write('\nThe following components are now in the definite bad set:\n'),
+    printlist(AllBad),
     % the Good ones are elimenated from the T set
     remove_good(Good,T,  T2),
     retractall(test(_,_)),
     elimenate_errors(T2, Tail))).
-    
 
+% exclude elements of the first list that are in the second list
+exclude_second(_, [], []):-!.
+
+exclude_second(Bad, [H|Good], [H|StillGood]):-
+    \+member(H, Bad),!,
+    exclude_second(Bad, Good, StillGood).
+           
+exclude_second(Bad, [_|Good], StillGood):-
+    exclude_second(Bad, Good, StillGood),!.
+           
 
 check_forward([],[],[]).
 
