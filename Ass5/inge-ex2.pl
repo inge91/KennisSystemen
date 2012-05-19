@@ -12,15 +12,9 @@ input(b,2).
 input(c,2).
 input(d,3).
 input(e,2).
-input(f,3).
-input(g,2).
-input(h,2).
-input(i,3).
-input(j,2).
 
-
-output(s,100).
-output(t,120).
+output(f,10).
+output(g,10).
 backprop([X/Y|T], [Errors|Error]):-
     predictedValue(X, Z),
     writef("Value of output %t seems incorrect.\nEstimated output: %t \nMeasured
@@ -32,16 +26,47 @@ backprop([X/Y|T], [Errors|Error]):-
 %probedValue(x,4)
 
 %component(Serial, Element, Input1, Input2,output)
-component(m1, mult, a, b, k).
-component(m2, mult, c, d, l).
-component(m3, mult, e, f, m).
-component(m4, mult, g, h, n).
-component(m5, mult, i, j, o).
-component(a1, add, k, l, p).
-component(a2, add, m, n, q).
-component(a3, add, n, o, r).
-component(m6, mult, p, q, s).
-component(m7, mult, q, r, t).
+component(m1, mult, a, c, x).
+component(m2, mult, b, d, y).
+component(m3, mult, c, e, z).
+component(a1, add, x, y, f).
+component(a2, add, y, z, g).
+
+%input(a,3).
+%input(b,2).
+%input(c,2).
+%input(d,3).
+%input(e,2).
+%input(f,3).
+%input(g,2).
+%input(h,2).
+%input(i,3).
+%input(j,2).
+%
+%
+%output(s,100).
+%output(t,120).
+%backprop([X/Y|T], [Errors|Error]):-
+%    predictedValue(X, Z),
+%    writef("Value of output %t seems incorrect.\nEstimated output: %t \nMeasured
+%
+%%wat wij uitrekenen (forward propagation)
+%%predictedValue(x,6)
+%
+%%wat de user heeft gemeten
+%%probedValue(x,4)
+%
+%%component(Serial, Element, Input1, Input2,output)
+%component(m1, mult, a, b, k).
+%component(m2, mult, c, d, l).
+%component(m3, mult, e, f, m).
+%component(m4, mult, g, h, n).
+%component(m5, mult, i, j, o).
+%component(a1, add, k, l, p).
+%component(a2, add, m, n, q).
+%component(a3, add, n, o, r).
+%component(m6, mult, p, q, s).
+%component(m7, mult, q, r, t).
 
 
 diagnose:-
@@ -105,6 +130,7 @@ backprop:-
     write('\nThe following components are malfunctioning:\n'),
     printlist(FinalErrors).
 
+printlist([]).
 printlist([H]):-
     write(H),!.
 
@@ -143,9 +169,7 @@ backprop([X/Y|T], Error):-
 
 backprop([X/Y|T], [Errors|Error]):-
     predictedValue(X, Z),
-    writef("Value of output %t seems incorrect.\nEstimated output: %t \nMeasured
-        output: %t\n",
-    [X, Z, Y]),
+    writef("Value of output %t seems incorrect.\nEstimated output: %t \nMeasured output: %t\n", [X, Z, Y]),
         output: %t\n Extracting conflict set...",
     % front is last function, end is first function
     create_errorset(X, Errors),

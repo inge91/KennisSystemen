@@ -9,7 +9,7 @@ input(d,3).
 input(e,2).
 
 output(f,10).
-output(g,12).
+output(g,10).
 backprop([X/Y|T], [Errors|Error]):-
     predictedValue(X, Z),
     writef("Value of output %t seems incorrect.\nEstimated output: %t \nMeasured

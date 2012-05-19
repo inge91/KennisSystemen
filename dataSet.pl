@@ -73,7 +73,47 @@ show:-
 isaprint:-
 	findall(X, isa(X, _), List1),
 	findall(Y, isa(_, Y), List2),
-	printingisa(List1, List2).
+    only_animals(List1, List2, Animals),
+	print_animals(Animals).
+
+% we want things only in the first
+% list and not in the second one
+only_animals([], _, []).
+
+only_animals([H|T], List, [H|Rest]):-
+    \+member(H, List),
+    only_animals(T, list, Rest).
+
+only_animals([_|T], List, Rest):-
+    only_animals(T, List, Rest).
+
+print_animals([H|T]):-
+    writef("%t is a ", [H]),
+    all_predecessors(H, Preds),
+    print_predecessors(Preds),
+    all_attributes(H, Attr),
+    print_attriutes(Attr),
+    print_animals(T).
+
+all_predecessors(R, thing):-
+   isa(R, thing),!. 
+
+all_predecessors(H,[R|T]):-
+    isa(H, R),!,
+    all_predecessors(R, T).
+
+print_predecessors([]).
+
+print_predecessors([H]):-
+    write(H),
+    print_predecessors([]).
+
+print_predecessors([H|T]):-
+    write(H),
+    write(' is a '),
+    print_predecessorts(T).
+
+
 
 printingisa([],[]).
 	
