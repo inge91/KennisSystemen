@@ -33,7 +33,7 @@
 %2 h---                            /  m7 --- 100 t  GIVEN OUTPUT = 120
 %                      a3 --- 10 r
 %3 i---
-%       m5 --- 4 o ---
+%       m5 --- 6 o ---
 %2 j---
 %   
 % the first column is input, the last one output
